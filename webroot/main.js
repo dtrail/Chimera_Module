@@ -99,12 +99,15 @@ function updateProfileView(data) {
 
     let hasActive = false;
     lines.forEach((line) => {
-      if (!line.startsWith("#")) {
+      // Entferne komische Escape-Reste aus dem String (KSU gibt oft "\n" LITERAL zurück)
+      const cleanLine = line.replace(/\\r/g, '').replace(/\\n/g, '').trim();
+      
+      if (!cleanLine.startsWith("#") && cleanLine.length > 2 && !cleanLine.includes("gääähhhnnn")) {
         activeCount++;
         hasActive = true;
         const chip = document.createElement("span");
         chip.style.cssText = "display: inline-block; background: var(--red); color: white; padding: 4px 8px; border-radius: 4px; margin: 4px; font-family: monospace; font-size: 0.85rem;";
-        chip.innerText = line;
+        chip.innerText = cleanLine; // Use the CLEAN line, not the raw one!
         container.appendChild(chip);
       }
     });
@@ -134,8 +137,9 @@ function updateStatsView(stats, conf) {
 
   const activeList = safeConf
     .split("\n")
-    .filter((l) => l.trim() && !l.startsWith("#"))
-    .map((l) => l.trim().toLowerCase());
+    .map((l) => l.replace(/\\r/g, '').replace(/\\n/g, '').trim())
+    .filter((l) => l && !l.startsWith("#"))
+    .map((l) => l.toLowerCase());
 
   let wakelocks = [];
   let totalBlocked = 0;
@@ -166,7 +170,7 @@ function updateStatsView(stats, conf) {
   // damit man sie anklicken kann, auch wenn sie aktuell 0 Hits haben!
   const confLines = safeConf.split("\n");
   confLines.forEach((line) => {
-    let rawItem = line.trim();
+    let rawItem = line.replace(/\\r/g, '').replace(/\\n/g, '').trim();
     // Überspringe leere Zeilen und Sektions-Überschriften (# ---)
     if (rawItem.length > 2 && !rawItem.startsWith("# ---") && !rawItem.startsWith("# ==")) {
       // Wenn es durch ein # erlaubt ist, entfernen wir das #, um an den Namen zu kommen
@@ -303,30 +307,25 @@ function updateStatsView(stats, conf) {
   });
 }
 
-// Löscht einen Eintrag hart aus der Config
-
 async function deleteWL(name) {
   const file = "/data/adb/chimera/blocklist.conf";
-
-  const cmd = `grep -vi "^[[:space:]]*#*[[:space:]]*${name}$" "${file}" > "${file}.tmp" && mv "${file}.tmp" "${file}" ; pkill -HUP -f chimera_controller.sh`;
-
+  // Safe sed: In-Place deletion (ignores case if supported, otherwise exact match).
+  const cmd = `sed -i "/^#* *${name}$/d" "${file}" ; sed -i "/^#* *${name.toLowerCase()}$/d" "${file}" ; pkill -HUP -f chimera_controller.sh`;
   await run(cmd);
-
   loadAll();
 }
 
 async function toggleWL(name, block) {
   const file = "/data/adb/chimera/blocklist.conf";
-
-  let cmd = `grep -vi "^[[:space:]]*#*[[:space:]]*${name}$" "${file}" > "${file}.tmp" && mv "${file}.tmp" "${file}" ; `;
+  
+  // Safe sed in-place deletion
+  let cmd = `sed -i "/^#* *${name}$/d" "${file}" ; sed -i "/^#* *${name.toLowerCase()}$/d" "${file}" ; `;
 
   if (block) cmd += `echo "${name}" >> "${file}" ; `;
   else cmd += `echo "# ${name}" >> "${file}" ; `;
 
   cmd += `pkill -HUP -f chimera_controller.sh`;
-
   await run(cmd);
-
   loadAll();
 }
 

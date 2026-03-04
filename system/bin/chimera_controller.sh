@@ -111,18 +111,21 @@ create_default_config() {
     echo "# DIAG_WS" >> $CONF_FILE
     echo "telemetry" >> $CONF_FILE
     echo "# mdm_stats" >> $CONF_FILE
-    echo "# logd" >> $CONF_FILE
-    echo "# pdp_watchdog" >> $CONF_FILE
+    echo "logd" >> $CONF_FILE
+    echo "pdp_watchdog" >> $CONF_FILE
     echo "" >> $CONF_FILE
     
-    echo "# --- GOOGLE SERVICES (Uncommented = BLOCKED) ---" >> $CONF_FILE
-    echo "gms_scheduler" >> $CONF_FILE
-    echo "GcmSchedulerWakeupService" >> $CONF_FILE
-    echo "QosUploaderService" >> $CONF_FILE
-    echo "PayGcmTaskService" >> $CONF_FILE
-    echo "Google_C2DM" >> $CONF_FILE
-    echo "ChromeSync" >> $CONF_FILE
-    echo "SendReportAction" >> $CONF_FILE
+    echo "# --- JAVA/USERSPACE WAKELOCKS (Examples - Usually Ignored) ---" >> $CONF_FILE
+    echo "# Modern Android aggregates Android/Java wakelocks (like GMS)." >> $CONF_FILE
+    echo "# The C-Kernel module cannot see these string names directly." >> $CONF_FILE
+    echo "# They are stopped by chimera_controller.sh (standby-buckets)." >> $CONF_FILE
+    echo "# #gms_scheduler" >> $CONF_FILE
+    echo "# #GcmSchedulerWakeupService" >> $CONF_FILE
+    echo "# #QosUploaderService" >> $CONF_FILE
+    echo "# #PayGcmTaskService" >> $CONF_FILE
+    echo "# #Google_C2DM" >> $CONF_FILE
+    echo "# #ChromeSync" >> $CONF_FILE
+    echo "# #SendReportAction" >> $CONF_FILE
     echo "" >> $CONF_FILE
 
     echo "# --- EXPERIMENTAL NETWORK (Commented = ALLOWED) ---" >> $CONF_FILE
