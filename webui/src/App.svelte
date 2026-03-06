@@ -8,6 +8,7 @@
   let kernelStats = $state([]);
   let totalBlocked = $state(0);
   let customWakelock = $state("");
+  let searchQuery = $state("");
   let rawConfigText = $state("");
   let sortBy = $state("total"); // 'total', 'blocked', 'name'
 
@@ -75,6 +76,10 @@
             const parts = cleanLine.split("|").map((x) => x.trim());
             if (parts.length >= 3 && parts[0]) {
               const name = parts[0];
+
+              // Filter out kernel-ingested comments that contain spaces
+              if (!name || name.includes(" ") || name.length < 3) return;
+
               const blocked = parseInt(parts[1].replace(/\*/g, "")) || 0;
               const allowed = parseInt(parts[2]) || 0;
               tempTotal += blocked;
@@ -92,8 +97,12 @@
       // Merge inactive blocklist items into stat view for control
       confLines.forEach((line) => {
         const rawName = line.startsWith("#") ? line.substring(1).trim() : line;
+
+        // Strict Wakelock Name Validation (same as above)
+        // Ignore lines that are comments/sentences (have spaces) or empty
+        if (!rawName || rawName.includes(" ") || rawName.length < 3) return;
+
         if (
-          rawName &&
           !tempStats.some((s) => s.name.toLowerCase() === rawName.toLowerCase())
         ) {
           tempStats.push({ name: rawName, blocked: 0, allowed: 0, total: 0 });
@@ -113,13 +122,19 @@
     }
   }
 
-  // Derived reactive sorting
+  // Derived reactive sorting and searching
   let sortedStats = $derived(
-    [...kernelStats].sort((a, b) => {
-      if (sortBy === "blocked") return b.blocked - a.blocked;
-      if (sortBy === "name") return a.name.localeCompare(b.name);
-      return b.total - a.total; // default 'total'
-    }),
+    [...kernelStats]
+      .filter(
+        (s) =>
+          !searchQuery ||
+          s.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+      .sort((a, b) => {
+        if (sortBy === "blocked") return b.blocked - a.blocked;
+        if (sortBy === "name") return a.name.localeCompare(b.name);
+        return b.total - a.total; // default 'total'
+      }),
   );
 
   async function toggleWL(name, block) {
@@ -288,7 +303,7 @@
         </p>
       {:else}
         <pre
-          class="text-[11px] text-neutral-400 font-mono whitespace-pre-wrap break-all leading-normal m-0">{rawConfigText}</pre>
+          class="text-[11px] text-neutral-400 font-mono whitespace-pre-wrap break-words leading-normal m-0">{rawConfigText}</pre>
       {/if}
     </div>
   </div>
@@ -296,9 +311,17 @@
   <!-- Live Analytics Card -->
   <div class="bg-[#1e1e1e] border border-[#333] rounded-xl p-4 mb-4 shadow-md">
     <div class="flex flex-col gap-3 mb-4">
-      <h3 class="text-sm font-bold text-neutral-300 uppercase tracking-wide">
-        Live Analytics
-      </h3>
+      <div class="flex justify-between items-center w-full">
+        <h3 class="text-sm font-bold text-neutral-300 uppercase tracking-wide">
+          Live Analytics
+        </h3>
+        <input
+          type="text"
+          bind:value={searchQuery}
+          placeholder="🔎 Search..."
+          class="w-32 bg-[#121212] border border-[#333] rounded px-2 py-1 text-[10px] text-neutral-200 focus:outline-none focus:border-red-500/50 transition m-0"
+        />
+      </div>
 
       <!-- Filter Controls -->
       <div

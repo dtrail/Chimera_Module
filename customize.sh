@@ -13,7 +13,6 @@ killall -9 chimera 2>/dev/null
 # 2. Config Ordner erstellen
 ui_print "- Creating config directory..."
 mkdir -p /data/adb/chimera
-mkdir -p /data/adb/chimera/logs
 
 # 3. Berechtigungen setzen (Das Wichtigste!)
 # Da Magisk schon entpackt hat, sind die Dateien jetzt in $MODPATH.
@@ -27,7 +26,8 @@ set_perm $MODPATH/service.sh 0 0 0755
 set_perm $MODPATH/system/bin/chimera 0 0 0755
 set_perm $MODPATH/system/bin/chimera_controller.sh 0 0 0755
 
-# WebUI X Config Berechtigungen
+# WebUI Setup
+# ==============================================================================
 set_perm "$MODPATH/webroot/index.html" 0 0 0644
 
 # ==============================================================================
@@ -36,7 +36,7 @@ set_perm "$MODPATH/webroot/index.html" 0 0 0644
 
 CONF_DIR="/data/adb/chimera"
 CONF_FILE="$CONF_DIR/blocklist.conf"
-BACKUP_FILE="$CONF_DIR/blocklist_backup_v6.1.conf"
+BACKUP_FILE="$CONF_DIR/blocklist_backup.conf"
 
 ui_print "- Checking for existing configuration..."
 
@@ -44,9 +44,9 @@ if [ -f "$CONF_FILE" ]; then
     ui_print "  *************************************************"
     ui_print "  ! EXISTING BLOCKLIST DETECTED !"
     ui_print "  *************************************************"
-    ui_print "  Because v6.1 contains critical safety updates,"
+    ui_print "  To safely apply new kernel parameters,"
     ui_print "  your old blocklist has been backed up to:"
-    ui_print "  -> blocklist_backup_v6.1.conf"
+    ui_print "  -> blocklist_backup.conf"
     ui_print " "
     ui_print "  A fresh, safe default list will be generated."
     ui_print "  Please use the WebUI or text editor to port"
@@ -63,9 +63,8 @@ fi
 if [ -d "$CONF_DIR" ]; then
     set_perm_recursive "$CONF_DIR" 0 0 0755 0644
 fi
-
 # 4. Aufräumen (Wie in deinem Beispiel)
 # customize.sh wird im installierten Modul nicht mehr gebraucht
-rm -f "$MODPATH/customize.sh"
+rm -f $MODPATH/customize.sh
 
 ui_print "- Installation successful! Please Reboot."
