@@ -27,6 +27,9 @@ set_perm $MODPATH/service.sh 0 0 0755
 set_perm $MODPATH/system/bin/chimera 0 0 0755
 set_perm $MODPATH/system/bin/chimera_controller.sh 0 0 0755
 
+# WebUI X Config Berechtigungen
+set_perm "$MODPATH/webroot/index.html" 0 0 0644
+
 # ==============================================================================
 # CHIMERA FAMILIA - UPDATE & MIGRATION LOGIC
 # ==============================================================================
@@ -63,6 +66,6 @@ fi
 
 # 4. Aufräumen (Wie in deinem Beispiel)
 # customize.sh wird im installierten Modul nicht mehr gebraucht
-rm -f $MODPATH/customize.sh
+rm -f "$MODPATH/customize.sh"
 
 ui_print "- Installation successful! Please Reboot."

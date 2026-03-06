@@ -106,9 +106,14 @@ create_default_config() {
     echo "# mRoutingWakeLock" >> $CONF_FILE
     echo "" >> $CONF_FILE
 
+    echo "# --- FORCE BLOCK (Anti-Burst Shield) ---" >> $CONF_FILE
+    echo "# Wakelocks here are IMMUNE to Chimera's Auto-Heal." >> $CONF_FILE
+    echo "# They will NEVER be auto-allowed, even if they burst." >> $CONF_FILE
+    echo "DIAG_WS" >> $CONF_FILE
+    echo "" >> $CONF_FILE
+
     echo "# --- TELEMETRY & DIAGNOSTICS (Uncommented = BLOCKED) ---" >> $CONF_FILE
     echo "# Safe to block. Stops Qualcomm/System data collection." >> $CONF_FILE
-    echo "# DIAG_WS" >> $CONF_FILE
     echo "telemetry" >> $CONF_FILE
     echo "# mdm_stats" >> $CONF_FILE
     echo "logd" >> $CONF_FILE
@@ -176,7 +181,16 @@ auto_heal() {
             echo "# --- EMERGENCY ENTRIES (Auto-disabled for causing bursts/instability) ---" >> "$CONF_FILE"
         fi
         
+        # Extract Force Block items (items between FORCE BLOCK and the next section)
+        FORCE_BLOCKS=$(awk '/--- FORCE BLOCK/{flag=1; next} /--- /{flag=0} flag && !/^#/ && NF {print $1}' "$CONF_FILE")
+
         for lock in $EMERGENCIES; do
+            # Anti-Burst-Schild check
+            if echo "$FORCE_BLOCKS" | grep -q "^${lock}$"; then
+                echo "🛡️ **FORCE BLOCK:** Auto-Heal ignored burst from \`$lock\` (Shield Active)." >> "$LOG_FILE"
+                continue
+            fi
+
             if grep -q "^${lock}$" "$CONF_FILE"; then
                 sed -i "/^${lock}$/d" "$CONF_FILE"
                 echo "# $lock" >> "$CONF_FILE"
